@@ -21,4 +21,4 @@ countries. There are two main options:
   - International Reserves
 
 Find more about the monitor
-[here](https://faf-econ.github.io/currency_contribution/methodology.html)
+[here](https://faf-econ.github.io/currency_crisis_monitor/methodology.html)
