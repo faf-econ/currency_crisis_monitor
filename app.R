@@ -359,4 +359,3 @@ server <- function(input, output) {
 # 4 Launch App -------------------------------------------------------------------------
 
 shinyApp(ui, server)
-#rsconnect::deployApp('/home/faf/Dropbox/Git_Projects/currency_crisis_monitor')
