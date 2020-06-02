@@ -1,0 +1,10 @@
+name: currency_crisis_monitor
+title:
+username:
+account: faf-econ
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2391292
+bundleId: 3219959
+url: https://faf-econ.shinyapps.io/currency_crisis_monitor/
+when: 1591127321.87347

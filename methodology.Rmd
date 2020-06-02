@@ -1,0 +1,139 @@
+---
+title: "Currency Monitor"
+author: "Fernando Agustin Falbo"
+date: "Jun 2020"
+output:
+  bookdown::html_document2:
+    toc: true
+    toc_float: true
+---
+  
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+
+library(knitr)
+library(plyr)
+library(kableExtra)
+library(dplyr)
+library(ggplot2)
+library(scales)
+library(magrittr)
+library(imfr)
+
+```
+
+# Introduction
+
+The [currency monitor](https://faf-econ.shinyapps.io/currency_crisis_monitor/) is an app which allows the user to track currency pressure in different countries. There are two main options:
+
+1. **World Map** shows the evolution of currency crisis from 1974. More intense colors indicate more crisis occurrences.
+
+2. **Individual Countries** shows the evolution of:
+  - [Exchange Rate Pressure Index], the [trigger](#trigger) , and identifies the months when a [Currency Crisis] occurred.
+  - Exchange Rate
+  - International Reserves
+
+# Exchange Rate Pressure Index 
+
+Assume that there are N countries ($i = 1, 2, ..., N$) and T periods ($t = 1, 2, ...,T$). For each country and month, there is a currency crisis variable $Y$ that can assume as values only $0$ (non-crisis) or $1$ (crisis). 
+
+To derive the crisis binary variable, an exchange rate pressure index (ERPI) is needed first. ERPI is defined as a weighted average between the monthly change in the nominal exchange rate and that in the stock of foreign exchange reserves:
+
+> **Exchange Rate Pressure Index (ERPI):**
+$$ERPI_{i,t} = \frac{e_{i,t} - e_{i,t-1}}{e_{i,t-1}} -\frac{\sigma_{e_{i}}}{\sigma_{fxr_{i}}} \frac{fxr_{i,t} - fxr_{i,t-1}}{fxr_{i,t-1}}$$
+
+Where $e_{i,t}$ is the nominal exchange rate of country $i$ currency against the U.S. dollar at time $t$, and $fxr_{i,t}$ is the stock of foreign exchange rate reserves held by the country $i$ at time $t$.
+
+# Currency Crisis
+Currency Crisis $CC_{i,t}$ is a binary variable that can take either 1 (when the ERPI is above its mean by a number $\eta$ of standard deviations) or 0 (otherwise):
+
+> **Currency Crisis (CC):**
+\begin{align*}
+CC_{i,t}=
+\begin{cases}
+1, & \text{if}\ ERPI_{i,t} > Trigger \text{ and } ERPI_{i,t} > \delta \\
+0, & \text{otherwise}
+\end{cases}\\
+\end{align*}
+
+Where <a id="trigger"></a> $Trigger = \bar{ERPI_{i}} + \eta \sigma_{ERPI_{i}}$, $\bar{ERPI_{i}}$ is the ERPI mean for country $i$, and $\delta$ is a pressure tolerance parameter (further explained below). 
+
+For further discussion on exchange rate pressure indices, currency crisis and methodology, please see:
+
+- Eichengreen, Barry, Andrew K. Rose, and Charles Wyplosz, 1995, *"Exchange Market Mayhem"*, Economic Policy, Vol. 10, No. 21, pp. 249–312.
+- Kaminsky, Graciela L., 1998, *"Currency and Banking Crises: The Early Warning of Distress"*, International Finance Discussion Paper No. 629, (Washington: Board of Governors of the Federal Reserve System).
+- Comelli, Fabio, 2014, *"Comparing the Performance of Logit and Probit Early Warning Systems for Currency Crises in Emerging Market Economies"*, WP/14/65, IMF.
+
+
+# The Data
+
+The currency crisis monitor uses updated data from the International Financial Statistics - [IFS](https://data.imf.org/) - of the International Monetary Fund - [IMF](https://data.imf.org/) -.
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+vbles <- imf_codes(codelist = "CL_INDICATOR_IFS") %>%
+  as.data.frame() %>%
+  filter(description %in% c("Exchange Rates, Domestic Currency per U.S. Dollar, End of Period, Rate", 
+                            "Total International Reserves, US Dollars (gold at 35 SDRs per ounce)"))
+  
+```
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+variables <- c("$e_{i,t}$", "$fx_{i,t}$")
+vbles <- cbind(variables, vbles)
+
+kable(vbles, caption = "IMF Variables") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
+
+```
+
+
+# Parameters to be defined 
+
+The computation of the ERPI and the exercise of identifying currency crisis is relatively simple, but there are several parameters to be defined.
+
+> **Backward Window (# months) for $\sigma_{e_{i}}$ and $\sigma_{fx_{i}}$:**\
+  - *Default value: 12 months*\
+  - *Range from 2 to 120 months*  
+
+> **Backward Window (# months) for Trigger:**\
+This refers to the backward window (# of months) to compute variables $\bar{ERPI_{i}}$ and $\sigma_{ERPI_{i}}$\
+  - *Default value: 60 months*\
+  - *Range from 2 to 120 months*  
+
+> **$\eta$\ Number of sd above mean to consider Currency Crisis:**\
+  - *Default value: $\eta = 3$*\
+  - *Range from 1 to 4 (by 0.5)*  
+  
+> **Backward Window (# months) with no crisis:**\
+If there is a crisis in $t$, it is not reasonable to compute a new currency crisis at $t+1$. Then, this parameter determines how many previous months with no crisis are considered to compute a new crisis.\
+  - *Default value: 6 months*\
+  - *Range from 1 to 24 months*  
+
+> **$\delta$ Pressure Tolerance:**\
+This is an additional parameter to avoid computing a currency crisis when $\bar{ERPI_{i}}$ for a particular country is very low. In those cases, a small currency shoot could incorrectly compute a crisis. Then, this parameter impose an additional rule to consider a crisis. In addition to be higher than the $Trigger$, $ERPI$ should be also higher than the pressure tolerance $\delta$  
+  - *Default value: 0.1*\
+  - *Range from 0 to 2 (by 0.25)*  
+
+Additionally, the monitor app also requires to choose:
+
+> **Country**\
+It is required to choose between:\
+- An individual country to see the evolution of:\
+  * *ERPI, Trigger, crisis occurrences*\
+  * *Exchange Rate*\
+  * *International Reserves*\
+- Or choose world map (default option) to see accumulated crisis across the world (when data is available)
+
+> **Year to start computation**\
+Select the year to start calculating parameters and counting crisis
+
+
+
