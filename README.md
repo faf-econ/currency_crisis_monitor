@@ -4,8 +4,8 @@ Fernando Agustin Falbo
 Jun 2020
 
 The [currency
-monitor](https://faf-econ.shinyapps.io/currency_crisis_monitor/) is an
-app which allows the user to track currency pressure in different
+monitor](https://faf-econ.shinyapps.io/currency_crisis_monitor/) is a
+Shiny app which allows the user to track currency pressure in different
 countries. There are two main options:
 
 1.  **World Map** shows the evolution of currency crisis from 1974. More
