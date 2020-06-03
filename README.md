@@ -20,4 +20,4 @@ countries. There are two main options:
   - Exchange Rate
   - International Reserves
 
-Find more about the monitor here: https://faf-econ.github.io/currency_crisis_monitor/methodology.html
+Find more about the monitor [here](https://faf-econ.github.io/currency_crisis_monitor/methodology.html)
